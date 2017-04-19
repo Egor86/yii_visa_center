@@ -2,6 +2,8 @@
 
 namespace app\controllers;
 
+use app\models\Customer;
+use app\models\User;
 use Yii;
 use yii\filters\AccessControl;
 use yii\web\Controller;
@@ -63,6 +65,22 @@ class SiteController extends Controller
         return $this->render('index');
     }
 
+    public function actionRegister()
+    {
+        if (!Yii::$app->user->isGuest) {
+            return $this->goHome();
+        }
+
+        $model = new Customer(['scenario' => Customer::SCENARIO_REGISTER]);
+        if ($model->load(Yii::$app->request->post()) && $model->save()) {
+            return $this->render('success_register');
+        }
+
+        return $this->render('register', [
+            'model' => $model,
+        ]);
+    }
+
     /**
      * Login action.
      *
@@ -121,5 +139,18 @@ class SiteController extends Controller
     public function actionAbout()
     {
         return $this->render('about');
+    }
+
+    public function actionApply()
+    {
+        if (!Yii::$app->getUser()->isGuest) {
+            $customer = User::findIdentity(Yii::$app->getUser()->id);
+            if ($customer && $customer->status === Customer::STATUS_VERIFY) {
+                return $this->render('application_form');
+            }
+
+
+        }
+        return $this->redirect('register');
     }
 }

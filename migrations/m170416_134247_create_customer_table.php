@@ -5,14 +5,14 @@ use yii\db\Migration;
 /**
  * Handles the creation of table `application_form`.
  */
-class m170416_134247_create_application_form_table extends Migration
+class m170416_134247_create_customer_table extends Migration
 {
     /**
      * @inheritdoc
      */
     public function up()
     {
-        $this->createTable('application_form', [
+        $this->createTable('customer', [
             'id' => $this->primaryKey(),
             'first_name' => $this->string(255),
             'last_name' => $this->string(255),
@@ -21,7 +21,9 @@ class m170416_134247_create_application_form_table extends Migration
             'citizenship' => $this->string(255),
             'password' => $this->text()->notNull(),
             'access_token' => $this->text(),
-            'status' => $this->boolean()
+            'status' => $this->boolean(),
+            'created_at' => $this->integer()->notNull(),
+            'updated_at' => $this->integer()->notNull(),
         ]);
     }
 
@@ -30,6 +32,6 @@ class m170416_134247_create_application_form_table extends Migration
      */
     public function down()
     {
-        $this->dropTable('application_form');
+        $this->dropTable('customer');
     }
 }
