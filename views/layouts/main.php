@@ -27,32 +27,57 @@ AppAsset::register($this);
 <div class="wrap">
     <?php
     NavBar::begin([
-        'brandLabel' => 'My Company',
+        'brandLabel' => 'Visa-Center',
         'brandUrl' => Yii::$app->homeUrl,
         'options' => [
             'class' => 'navbar-inverse navbar-fixed-top',
         ],
     ]);
+
+    $item = [['label' => 'Home', 'url' => ['/site/index']],
+            ['label' => 'Application form', 'url' => ['/site/apply']]];
+
+    if (Yii::$app->user->isGuest) {
+        $item[] = ['label' => 'Registration', 'url' => ['/site/register']];
+        $item[] = ['label' => 'Login', 'url' => ['/site/login']];
+    } else {
+        $item[] = (
+            '<li>'
+            . Html::beginForm(['/site/logout'], 'post')
+            . Html::submitButton(
+                'Logout (' . Yii::$app->user->identity->email . ')',
+                ['class' => 'btn btn-link logout']
+            )
+            . Html::endForm()
+            . '</li>'
+        );
+    }
+
     echo Nav::widget([
         'options' => ['class' => 'navbar-nav navbar-right'],
-        'items' => [
-            ['label' => 'Home', 'url' => ['/site/index']],
-            ['label' => 'Application form', 'url' => ['/site/apply']],
-            ['label' => 'About', 'url' => ['/site/about']],
-            ['label' => 'Contact', 'url' => ['/site/contact']],
-            Yii::$app->user->isGuest ? (
-                ['label' => 'Login', 'url' => ['/site/login']]
-            ) : (
-                '<li>'
-                . Html::beginForm(['/site/logout'], 'post')
-                . Html::submitButton(
-                    'Logout (' . Yii::$app->user->identity->username . ')',
-                    ['class' => 'btn btn-link logout']
-                )
-                . Html::endForm()
-                . '</li>'
-            )
-        ],
+        'items' => $item
+//        [
+//            ['label' => 'Home', 'url' => ['/site/index']],
+//            ['label' => 'Application form', 'url' => ['/site/apply']],
+//            ['label' => 'About', 'url' => ['/site/about']],
+//            ['label' => 'Contact', 'url' => ['/site/contact']],
+//            Yii::$app->user->isGuest ? (
+//                ['label' => 'Registration', 'url' => ['/site/register']]
+//            ) : '',
+//            Yii::$app->user->isGuest ? (
+//            ['label' => 'Registration', 'url' => ['/site/register']] .
+//                ['label' => 'Login', 'url' => ['/site/login']
+//            ]) : (
+//                '<li>'
+//                . Html::beginForm(['/site/logout'], 'post')
+//                . Html::submitButton(
+//                    'Logout (' . Yii::$app->user->identity->email . ')',
+//                    ['class' => 'btn btn-link logout']
+//                )
+//                . Html::endForm()
+//                . '</li>'
+//            )
+//        ],
     ]);
     NavBar::end();
     ?>
@@ -61,15 +86,27 @@ AppAsset::register($this);
         <?= Breadcrumbs::widget([
             'links' => isset($this->params['breadcrumbs']) ? $this->params['breadcrumbs'] : [],
         ]) ?>
+
+        <?php if (Yii::$app->getSession()->hasFlash('success')): ?>
+            <div class="alert alert-success">
+                <?= Yii::$app->getSession()->getFlash('success')?>
+            </div>
+        <?php endif;?>
+
+        <?php if (Yii::$app->getSession()->hasFlash('error')): ?>
+            <div class="alert alert-danger">
+                <?= Yii::$app->getSession()->getFlash('error'); ?>
+            </div>
+        <?php endif;?>
         <?= $content ?>
     </div>
 </div>
 
 <footer class="footer">
     <div class="container">
-        <p class="pull-left">&copy; My Company <?= date('Y') ?></p>
+        <p class="pull-left">&copy; Visa-Center <?= date('Y') ?></p>
 
-        <p class="pull-right"><?= Yii::powered() ?></p>
+<!--        <p class="pull-right">--><?//= Yii::powered() ?><!--</p>-->
     </div>
 </footer>
 

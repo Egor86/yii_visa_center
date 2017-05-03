@@ -19,9 +19,9 @@ class m170416_134247_create_customer_table extends Migration
             'email' => $this->string(255)->notNull()->unique(),
             'passport' => $this->string(255),
             'citizenship' => $this->string(255),
-            'password' => $this->text()->notNull(),
-            'access_token' => $this->text(),
-            'status' => $this->boolean(),
+            'password_hash' => $this->char(60)->notNull(),
+            'access_token' => $this->text()->notNull(),
+            'status' => $this->boolean()->defaultValue(2),
             'created_at' => $this->integer()->notNull(),
             'updated_at' => $this->integer()->notNull(),
         ]);

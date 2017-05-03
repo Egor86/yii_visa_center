@@ -3,9 +3,11 @@
 namespace app\controllers;
 
 use app\models\Customer;
+use app\models\CustomerOrder;
 use app\models\User;
 use Yii;
 use yii\filters\AccessControl;
+use yii\web\BadRequestHttpException;
 use yii\web\Controller;
 use yii\filters\VerbFilter;
 use app\models\LoginForm;
@@ -21,11 +23,25 @@ class SiteController extends Controller
         return [
             'access' => [
                 'class' => AccessControl::className(),
-                'only' => ['logout'],
+                'only' => ['logout', 'apply'],
                 'rules' => [
                     [
                         'actions' => ['logout'],
                         'allow' => true,
+                        'roles' => ['@'],
+                    ],
+                    [
+                        'actions' => ['apply'],
+                        'allow' => true,
+                        'matchCallback' => function ($rule, $action) {
+                            if (!Yii::$app->getUser()->isGuest) {
+                                $customer = Customer::findIdentity(Yii::$app->getUser()->id);
+                                if ($customer && $customer->status === Customer::STATUS_VERIFY) {
+                                    return true;
+                                }
+                            }
+                            return false;
+                        },
                         'roles' => ['@'],
                     ],
                 ],
@@ -67,13 +83,15 @@ class SiteController extends Controller
 
     public function actionRegister()
     {
-        if (!Yii::$app->user->isGuest) {
+        if (!Yii::$app->getUser()->getIsGuest()) {
             return $this->goHome();
         }
 
         $model = new Customer(['scenario' => Customer::SCENARIO_REGISTER]);
-        if ($model->load(Yii::$app->request->post()) && $model->save()) {
-            return $this->render('success_register');
+        if ($model->load(Yii::$app->getRequest()->post()) && $model->save()) {
+            Yii::$app->getSession()->setFlash('success',
+                Yii::t('app', 'You need to confirm registration via confirmation link, sending to your {email}', ['email' => $model->email]));
+            $this->goHome();
         }
 
         return $this->render('register', [
@@ -88,12 +106,12 @@ class SiteController extends Controller
      */
     public function actionLogin()
     {
-        if (!Yii::$app->user->isGuest) {
+        if (!Yii::$app->getUser()->getIsGuest()) {
             return $this->goHome();
         }
 
         $model = new LoginForm();
-        if ($model->load(Yii::$app->request->post()) && $model->login()) {
+        if ($model->load(Yii::$app->getRequest()->post()) && $model->login()) {
             return $this->goBack();
         }
         return $this->render('login', [
@@ -108,7 +126,7 @@ class SiteController extends Controller
      */
     public function actionLogout()
     {
-        Yii::$app->user->logout();
+        Yii::$app->getUser()->logout();
 
         return $this->goHome();
     }
@@ -143,14 +161,33 @@ class SiteController extends Controller
 
     public function actionApply()
     {
-        if (!Yii::$app->getUser()->isGuest) {
-            $customer = User::findIdentity(Yii::$app->getUser()->id);
-            if ($customer && $customer->status === Customer::STATUS_VERIFY) {
-                return $this->render('application_form');
-            }
+        $user = Yii::$app->getUser();
 
-
+        if (!$user) {
+            throw new BadRequestHttpException('The requested page does not exist.');
         }
-        return $this->redirect('register');
+
+        $model = Customer::findOne($user->getId());
+        $model->setScenario(Customer::SCENARIO_APPLICATION_FORM);
+
+        if ($model->load(Yii::$app->getRequest()->post()) && $model->save()) {
+            Yii::$app->getSession()->setFlash('success', Yii::t('app', 'Form is saved'));
+            $dateModel = new CustomerOrder();
+        }
+
+        if (Yii::$app->getRequest()->post('CustomerOrder')) {
+            $dateModel = new CustomerOrder();
+            if ($dateModel->load(Yii::$app->request->post()) && $dateModel->save()) {
+                Yii::$app->getSession()->setFlash('success',
+                    Yii::t('app', 'You are welcome at {dateTime}!!', ['dateTime' => $dateModel->order_time])
+                );
+                return $this->goHome();
+            }
+        }
+
+        return $this->render('application_form', [
+            'model' => $model,
+            'dateModel' => $dateModel ?? null
+        ]);
     }
 }
